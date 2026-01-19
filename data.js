@@ -2,28 +2,32 @@ const prodContainer = document.getElementById("products");
 
 async function fetchTelegramDeals() {
   try {
-    const url =
-      "https://api.rss2json.com/v1/api.json?rss_url=https://t.me/s/Faydamart";
+    const proxy = "https://api.allorigins.win/raw?url=";
+    const target = "https://t.me/s/Faydamart";
+    const res = await fetch(proxy + encodeURIComponent(target));
+    const html = await res.text();
 
-    const res = await fetch(url);
-    const data = await res.json();
+    // Telegram post blocks
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const posts = doc.querySelectorAll(".tgme_widget_message");
 
     prodContainer.innerHTML = "";
 
-    data.items.forEach(item => {
-      let title = item.title || "Deal";
-      let link = item.link;
-      let desc = item.description || "";
+    posts.forEach(post => {
+      const text =
+        post.querySelector(".tgme_widget_message_text")?.innerText || "Deal";
+      const link =
+        post.querySelector(".tgme_widget_message_date")?.href || "#";
+      const img =
+        post.querySelector("img")?.src ||
+        "https://via.placeholder.com/150";
 
-      // Image extract (if exists)
-      let imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
-      let image = imgMatch ? imgMatch[1] : "https://via.placeholder.com/150";
-
-      let div = document.createElement("div");
+      const div = document.createElement("div");
       div.className = "prod-card";
       div.innerHTML = `
-        <img src="${image}">
-        <p><strong>${title}</strong></p>
+        <img src="${img}">
+        <p>${text.substring(0, 80)}...</p>
         <a href="${link}" target="_blank">View Deal</a>
       `;
 
@@ -31,9 +35,8 @@ async function fetchTelegramDeals() {
     });
 
   } catch (e) {
-    console.error("Telegram feed error", e);
+    console.error("Telegram fetch error", e);
   }
 }
 
-// load on start
 fetchTelegramDeals();
