@@ -1,62 +1,39 @@
-// -----------------------------
-// Telegram Bot API integration
-// -----------------------------
-const botToken = "7243849381:AAFpr-7WobxnLqKXM2CC6OVnDuVUwDf-Bjs";
-const chatId = "@Faydamart"; // ya aapke channel ka username
-
 const prodContainer = document.getElementById("products");
 
-// Function to fetch latest messages from Telegram bot
 async function fetchTelegramDeals() {
-    try {
-        const url = `https://api.telegram.org/bot${botToken}/getUpdates`;
-        const res = await fetch(url);
-        const data = await res.json();
+  try {
+    const url =
+      "https://api.rss2json.com/v1/api.json?rss_url=https://t.me/s/Faydamart";
 
-        let deals = [];
+    const res = await fetch(url);
+    const data = await res.json();
 
-        // Loop through messages
-        data.result.forEach(msg => {
-            if(msg.message && msg.message.text){
-                // Format: "Category | Product Name | Price"
-                let text = msg.message.text;
-                if(text.includes("|")){
-                    let [category, name, price] = text.split("|");
-                    deals.push({
-                        category: category.trim(),
-                        name: name.trim(),
-                        price: price.trim(),
-                        image: "https://via.placeholder.com/150" // Optional: placeholder image
-                    });
-                }
-            }
-        });
-
-        // Show products on page
-        updateProducts(deals);
-
-    } catch(e){
-        console.error("Error fetching deals:", e);
-    }
-}
-
-// Function to update products section
-function updateProducts(deals){
     prodContainer.innerHTML = "";
-    deals.forEach(d => {
-        let div = document.createElement("div");
-        div.className = "prod-card";
-        div.innerHTML = `
-            <img src="${d.image}" alt="${d.name}">
-            <p>${d.name}</p>
-            <p>₹${d.price}</p>
-        `;
-        prodContainer.appendChild(div);
+
+    data.items.forEach(item => {
+      let title = item.title || "Deal";
+      let link = item.link;
+      let desc = item.description || "";
+
+      // Image extract (if exists)
+      let imgMatch = desc.match(/<img[^>]+src="([^">]+)"/);
+      let image = imgMatch ? imgMatch[1] : "https://via.placeholder.com/150";
+
+      let div = document.createElement("div");
+      div.className = "prod-card";
+      div.innerHTML = `
+        <img src="${image}">
+        <p><strong>${title}</strong></p>
+        <a href="${link}" target="_blank">View Deal</a>
+      `;
+
+      prodContainer.appendChild(div);
     });
+
+  } catch (e) {
+    console.error("Telegram feed error", e);
+  }
 }
 
-// Fetch every 30 seconds
-setInterval(fetchTelegramDeals, 30000);
-
-// Initial load
+// load on start
 fetchTelegramDeals();
