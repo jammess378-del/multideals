@@ -1,44 +1,35 @@
-const container = document.getElementById("products");
+const CHANNEL_URL = "https://t.me/s/Faydamart";
 
-async function loadTelegramDeals() {
-  try {
-    const proxy = "https://api.allorigins.win/raw?url=";
-    const telegramURL = "https://t.me/s/Faydamart";
-
-    const res = await fetch(proxy + encodeURIComponent(telegramURL));
-    const html = await res.text();
-
+fetch(CHANNEL_URL)
+  .then(res => res.text())
+  .then(html => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
-    const posts = doc.querySelectorAll(".tgme_widget_message");
 
-    container.innerHTML = "";
+    const messages = doc.querySelectorAll(".tgme_widget_message");
 
-    posts.forEach(post => {
-      const text =
-        post.querySelector(".tgme_widget_message_text")?.innerText || "";
-      const link =
-        post.querySelector(".tgme_widget_message_date")?.href || "#";
-      const img =
-        post.querySelector("img")?.src ||
-        "https://via.placeholder.com/300";
+    const container = document.getElementById("deals");
+
+    messages.forEach(msg => {
+
+      const photo = msg.querySelector(".tgme_widget_message_photo_wrap");
+      const text = msg.querySelector(".tgme_widget_message_text");
+      const link = msg.querySelector("a");
+
+      if (!photo || !text || !link) return;
+
+      const bg = photo.style.backgroundImage;
+      const img = bg.slice(5, -2);
 
       const card = document.createElement("div");
-      card.className = "prod-card";
+      card.className = "card";
 
       card.innerHTML = `
         <img src="${img}">
-        <p>${text.substring(0,120)}</p>
-        <a href="${link}" target="_blank">View Deal</a>
+        <div class="content">${text.innerText.slice(0, 120)}...</div>
+        <a href="${link.href}" target="_blank">View Deal</a>
       `;
 
       container.appendChild(card);
     });
-
-  } catch (err) {
-    container.innerHTML = "Failed to load deals";
-    console.error(err);
-  }
-}
-
-loadTelegramDeals();
+  });
